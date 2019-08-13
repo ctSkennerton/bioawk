@@ -53,27 +53,27 @@ See `awk.1`.
 
 2. Extract unmapped reads without header:
 
-        bioawk -c sam 'and($flag,4)' aln.sam.gz
+        bioawk -c sam 'and($flag, 4)' aln.sam.gz
 
 3. Extract mapped reads with header:
 
-        bioawk -Hc sam '!and($flag,4)'
+        bioawk -Hc sam '!and($flag, 4)'
 
 4. Reverse complement FASTA:
 
-        bioawk -c fastx '{print ">"$name;print revcomp($seq)}' seq.fa.gz
+        bioawk -c fastx '{print fastx($name, revcomp($seq))}' seq.fa.gz
 
 5. Create FASTA from SAM (uses revcomp if FLAG & 16)
 
         samtools view aln.bam | \
-            bioawk -c sam '{s=$seq; if(and($flag, 16)) {s=revcomp($seq)} print ">"$qname"\n"s}'
+            bioawk -c sam '{s=$seq; if(and($flag, 16)) {s=revcomp($seq)} print fastx($qname, s)}'
 
 6. Print the genotypes of sample `foo` and `bar` from a VCF:
 
         grep -v ^## in.vcf | bioawk -tc hdr '{print $foo,$bar}'
 
 7. Translate nucleotide into protein sequence
- 
+
         bioawk -c fastx '{print ">"$name;print translate($seq)}' seq.fa.gz
 can also use different translation tables.  To translate using the
 bactera/archaea code:
@@ -88,6 +88,22 @@ bactera/archaea code:
                             tgs[b[1]]=b[3] \
                         } \
                         if(tgs["NM"] < 3) print }' alignments.sam
+
+9. Get the %GC from FASTA
+
+        awk -c fastx '{print $name, gc($seq)}' seq.fa.gz
+
+10. Get the mean Phred quality score table from FASTQ:
+
+        awk -c fastx '{print $name, meanqual($qual)}' seq.fq.gz
+
+11. Take column name from the first line (where "age" appears in the first line) of input.txt):
+
+        awk -c header '{print $age}' input.txt
+
+12. Use awk's redirection to split a FASTA file by sequence lengths.
+
+        awk -c fastx '{if (length($seq) < 35) {print fastx($name, $seq) > "short.fasta"} else {print fastx($name, $seq) > "long.fasta"}}' seq.fq.gz
 
 
 ### Potential limitations

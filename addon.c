@@ -111,14 +111,14 @@ static char comp_tab[] = {
 	'p', 'q', 'y', 's', 'a', 'a', 'b', 'w', 'x', 'r', 'z', 123, 124, 125, 126, 127
 };
 
-/* The master codon/protein table. 
+/* The master codon/protein table.
  *
  * http://www.ncbi.nlm.nih.gov/Taxonomy/Utils/wprintgc.cgi
  * Tables 7,8,17,18,19,20 are depreciated and do not exist
  * on the NCBI website
  *
  */
-const char codon_table[64][25] = 
+const char codon_table[64][25] =
 {
 /*        1    2    3    4    5    6    7     8     9    10   11   12   13   14   15   16   17    18    19    20   21   22   23   24   25*/
  /*ttt*/{'F', 'F', 'F', 'F', 'F', 'F', '\0', '\0', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', '\0', '\0', '\0', '\0', 'F', 'F', 'F', 'F', 'F'},
@@ -241,7 +241,7 @@ void bio_translate(char *dna, char *out, int table)
             }
             break;
     }
-    
+
     int i;
     int dnaSize;
     int protSize = 0;
@@ -449,6 +449,34 @@ Cell *bio_func(int f, Cell *x, Node **a)
         setsval(y, out);
         free(out);
 
+	} else if (f == BIO_FFASTX) {
+		if (a[1]->nnext == 0) {
+			FATAL("fastx requires at least two arguments");
+		} else {
+			char *buf, *name, *seq, *qual;
+			int bufsz=3*recsize;
+			int has_qual;
+			z = execute(a[1]->nnext);
+			if ((has_qual = a[1]->nnext->nnext != 0)) {
+				y = execute(a[1]->nnext->nnext);
+				qual = getsval(y);
+			}
+
+			if ((buf = (char *) malloc(bufsz)) == NULL)
+				FATAL("out of memory in fastx");
+
+			name = getsval(x);
+			seq = getsval(z);
+			if (!has_qual) {
+				sprintf(buf, ">%s\n%s", name, seq);
+			} else {
+				if (strlen(seq) != strlen(qual))
+					WARNING("fastx arguments seq and qual are not same length");
+				sprintf(buf, "@%s\n%s\n+\n%s", name, seq, qual);
+			}
+			setsval(y, buf);
+			free(buf);
+		}
     } /* else: never happens */
 	return y;
 }

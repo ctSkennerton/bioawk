@@ -45,6 +45,7 @@ int bio_getrec(char **pbuf, int *psize, int isrecord);
 #define BIO_FMINQUAL    208
 #define BIO_FMAXQUAL    209
 #define BIO_FMEDIANQUAL    210
+#define BIO_FFASTX    211
 
 
 struct Cell;
