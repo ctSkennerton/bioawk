@@ -617,6 +617,19 @@ Bioawk also adds more built-in functions:
 return the GC-content of a nucleotide string
 .I s
 .TP
+.BI gffattr( s , " a" )
+split the gff attribute string
+.I s
+into the array 
+.I a. 
+The value of 
+.I s
+must be a properly formatted gff attribute string such as ID=PX161;Product=gene_name;EC_number=1.1.1.1. The resulting array
+.I a
+will have the keys ID, Product and EC_number. And the values will be PD161, gene_name, and 1.1.1.1. 
+If a key has multiple values they will not be split into a multidimentional array. 
+Furthermore, if a key is listed more than once, only the value of the second key will be saved.
+.TP
 .BI meanqual( s )
 calculate the mean quality score from a string
 .I s

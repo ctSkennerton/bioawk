@@ -29,9 +29,8 @@ man1dir := $(mandir)/man1
 
 GIT_VERSION := "$(shell git describe --abbrev=4 --dirty --always --tags)"
 
-CFLAGS = -g
-CFLAGS =
-CFLAGS = -O2 -DBIO_VERSION=\"$(GIT_VERSION)\"
+#CFLAGS = -O2 -DBIO_VERSION=\"$(GIT_VERSION)\"
+CFLAGS = -g -DBIO_VERSION=\"$(GIT_VERSION)\"
 
 # compiler options
 #CC = gcc -Wall -g -Wwrite-strings
@@ -57,6 +56,7 @@ LISTING = awk.h proto.h awkgram.y lex.c b.c main.c maketab.c parse.c \
 SHIP = README LICENSE FIXES $(SOURCE) ytab[ch].bak makefile  \
 	 awk.1
 a.out: bioawk
+	-rm a.out
 	ln -s bioawk a.out
 	
 bioawk:	ytab.o $(OFILES)

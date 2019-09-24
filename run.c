@@ -1289,7 +1289,7 @@ Cell *split(Node **a, int nnn)	/* split(a[0], a[1], a[2]); a[3] is type */
 	ap->sval = (char *) makesymtab(NSYMTAB);
 
 	n = 0;
-        if (arg3type == REGEXPR && strlen((char*)((fa*)a[2])->restr) == 0) {
+    if (arg3type == REGEXPR && strlen((char*)((fa*)a[2])->restr) == 0) {
 		/* split(s, a, //); have to arrange that it looks like empty sep */
 		arg3type = 0;
 		fs = "";

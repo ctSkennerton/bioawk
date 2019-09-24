@@ -90,6 +90,10 @@ bactera/archaea code:
                         } \
                         if(tgs["NM"] < 3) print }' alignments.sam
 
+9. turn the gff attribue string into an array
+
+	bioawk -c gff '{gffattr($attribute, a); print a["locus_tag"]}' test.gff
+
 
 ### Potential limitations
 

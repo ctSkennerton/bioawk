@@ -257,12 +257,82 @@ void bio_translate(char *dna, char *out, int table)
         out[i] = '\0';
 }
 
+void bio_attribute_inner(char * tag, char ** key, char ** value, char **sep_loc) {
+	/* split a gff Key=value string pair into the key and value*/
+	*key = tag;
+	char sep;
+	sep = '=';
+	while (*tag != sep && *tag != '\0')
+		tag++;
+	*sep_loc = tag;
+	*tag = '\0';
+	*value = ++tag;
+}
+
+void bio_attribute(Cell * x, Cell * ap, Cell * y) {
+	/* attribute(x, array [, format])
+	 	   x, which is a string with the tags or attributes field
+	 	     of either gff, or sam format.
+	 	   array, which is the array created by parsing the string
+	 	   format, an optional format, which can be gff or sam. The
+	 	     default is to infer the format from the current bio format
+	 	     set via the -c commandline option. Specifying the format
+	 	     allows you to overrite this or to use the function when
+	 	     -c isn't in effect.
+	
+	 	   will return the number of keys in the array. 
+	 	 */
+
+	char *origS, *s, sep, *t, temp;
+	origS = s = strdup(getsval(x));
+	sep = ';';
+	int n;
+	n = 0;
+	
+	for (;;) {
+		n++;
+		t = s;
+		while (*s != sep && *s != '\n' && *s != '\0')
+			s++;
+
+		/*we save the character which should be sep and then change it
+		to the null character to terminate the string. After we set the
+		string in the dictonary we set the charent character back*/
+		temp = *s;
+		*s = '\0';
+		
+		char *key, *value, *temp2;
+		bio_attribute_inner(t, &key, &value, &temp2);
+		if (is_number(value))
+			setsymtab(key, value, atof(value), STR|NUM, (Array *) ap->sval);
+		else
+			setsymtab(key, value, 0.0, STR, (Array *) ap->sval);
+		*s = temp;
+		*temp2 = '=';
+		if (*s++ == 0)
+			break;
+		}
+	free(origS);
+	y = gettemp();
+	y->tval = NUM;
+	y->fval = n;
+
+}
+
 static float q_int2real[128];
 
 #define tempfree(x)	  if (istemp(x)) tfree(x); else
 
 Cell *bio_func(int f, Cell *x, Node **a)
 {
+   /* 
+      a is essentially the calling context. a[1] is a list of the 
+      the function arguments.
+
+      y is the value that will be returned by the function.
+      x is the first argument of the function
+      z is the second argument of the function
+   */
 	Cell *y, *z;
 	y = gettemp();
 	if (f == BIO_FAND) {
@@ -451,6 +521,18 @@ Cell *bio_func(int f, Cell *x, Node **a)
         setsval(y, out);
         free(out);
 
+    } else if (f == BIO_GFFATTR) {
+    	Cell * ap;
+	    if (a[1]->nnext != 0) {
+	    	ap = execute(a[1]->nnext);
+	    } else {
+	    	FATAL("gffattr() requires at least two arguments");
+	    }
+		freesymtab(ap);
+		ap->tval &= ~STR;
+		ap->tval |= ARR;
+		ap->sval = (char *) makesymtab(NSYMTAB);
+	    bio_attribute(x, ap, y);
     } /* else: never happens */
 	return y;
 }
