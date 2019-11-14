@@ -188,16 +188,12 @@ Cell *program(Node **a, int n)	/* execute an awk program */
 			FATAL("illegal break, continue, next or nextfile from BEGIN");
 		tempfree(x);
 	}
-<<<<<<< HEAD
 	if (a[1] || a[2]) {
 		if (bio_fmt > BIO_HDR) bio_set_colnm();
-		while (getrec(&record, &recsize, 1) > 0) {
+		while (getrec(&record, &recsize, true) > 0) {
 			if (bio_skip_hdr(record)) continue;
 			if (bio_fmt == BIO_HDR && (int)(*NR + .499) == 1) bio_set_colnm();
-=======
-	if (a[1] || a[2])
-		while (getrec(&record, &recsize, true) > 0) {
->>>>>>> 108224b4845d7ac622cdc3dcbe47b463e4253a4b
+
 			x = execute(a[1]);
 			if (isexit(x))
 				break;
