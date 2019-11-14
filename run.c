@@ -188,11 +188,16 @@ Cell *program(Node **a, int n)	/* execute an awk program */
 			FATAL("illegal break, continue, next or nextfile from BEGIN");
 		tempfree(x);
 	}
+<<<<<<< HEAD
 	if (a[1] || a[2]) {
 		if (bio_fmt > BIO_HDR) bio_set_colnm();
 		while (getrec(&record, &recsize, 1) > 0) {
 			if (bio_skip_hdr(record)) continue;
 			if (bio_fmt == BIO_HDR && (int)(*NR + .499) == 1) bio_set_colnm();
+=======
+	if (a[1] || a[2])
+		while (getrec(&record, &recsize, true) > 0) {
+>>>>>>> 108224b4845d7ac622cdc3dcbe47b463e4253a4b
 			x = execute(a[1]);
 			if (isexit(x))
 				break;
@@ -442,9 +447,9 @@ Cell *awkgetline(Node **a, int n)	/* get next line from specific input */
 		}
 	} else {			/* bare getline; use current input */
 		if (a[0] == NULL)	/* getline */
-			n = getrec(&record, &recsize, 1);
+			n = getrec(&record, &recsize, true);
 		else {			/* getline var */
-			n = getrec(&buf, &bufsize, 0);
+			n = getrec(&buf, &bufsize, false);
 			x = execute(a[0]);
 			setsval(x, buf);
 			if (is_number(x->sval)) {
@@ -461,7 +466,7 @@ Cell *awkgetline(Node **a, int n)	/* get next line from specific input */
 
 Cell *getnf(Node **a, int n)	/* get NF */
 {
-	if (donefld == 0)
+	if (!donefld)
 		fldbld();
 	return (Cell *) a[0];
 }
@@ -825,15 +830,15 @@ int format(char **pbuf, int *pbufsize, const char *s, Node *a)	/* printf-like co
 #define FMTSZ(a)   (fmtsz - ((a) - fmt))
 #define BUFSZ(a)   (bufsize - ((a) - buf))
 
-	static int first = 1;
-	static int have_a_format = 0;
+	static bool first = true;
+	static bool have_a_format = false;
 
 	if (first) {
 		char buf[100];
 
 		snprintf(buf, sizeof(buf), "%a", 42.0);
 		have_a_format = (strcmp(buf, "0x1.5p+5") == 0);
-		first = 0;
+		first = false;
 	}
 
 	os = s;
