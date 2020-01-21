@@ -860,8 +860,13 @@ int format(char **pbuf, int *pbufsize, const char *s, Node *a)	/* printf-like co
 		for (t = fmt; (*t++ = *s) != '\0'; s++) {
 			if (!adjbuf(&fmt, &fmtsz, MAXNUMSIZE+1+t-fmt, recsize, &t, "format3"))
 				FATAL("format item %.30s... ran format() out of memory", os);
-			if (isalpha((uschar)*s) && *s != 'l' && *s != 'h' && *s != 'L')
-				break;	/* the ansi panoply */
+			/* Ignore size specifiers */
+			if (strchr("hjLlqtz", *s) != NULL) {	/* the ansi panoply */
+				t--;
+				continue;
+			}
+			if (isalpha((uschar)*s))
+				break;
 			if (*s == '$') {
 				FATAL("'$' not permitted in awk formats");
 			}
@@ -894,16 +899,9 @@ int format(char **pbuf, int *pbufsize, const char *s, Node *a)	/* printf-like co
 		case 'f': case 'e': case 'g': case 'E': case 'G':
 			flag = 'f';
 			break;
-		case 'd': case 'i':
-			flag = 'd';
-			if(*(s-1) == 'l') break;
+		case 'd': case 'i': case 'o': case 'x': case 'X': case 'u':
+			flag = (*s == 'd' || *s == 'i') ? 'd' : 'u';
 			*(t-1) = 'j';
-			*t = 'd';
-			*++t = '\0';
-			break;
-		case 'o': case 'x': case 'X': case 'u':
-			flag = *(s-1) == 'l' ? 'd' : 'u';
-			*(t-1) = 'l';
 			*t = *s;
 			*++t = '\0';
 			break;
@@ -939,8 +937,8 @@ int format(char **pbuf, int *pbufsize, const char *s, Node *a)	/* printf-like co
 		case 'a':
 		case 'A':
 		case 'f':	snprintf(p, BUFSZ(p), fmt, getfval(x)); break;
-		case 'd':	snprintf(p, BUFSZ(p), fmt, (long) getfval(x)); break;
-		case 'u':	snprintf(p, BUFSZ(p), fmt, (int) getfval(x)); break;
+		case 'd':	snprintf(p, BUFSZ(p), fmt, (intmax_t) getfval(x)); break;
+		case 'u':	snprintf(p, BUFSZ(p), fmt, (uintmax_t) getfval(x)); break;
 		case 's':
 			t = getsval(x);
 			n = strlen(t);
@@ -1780,13 +1778,13 @@ Cell *closefile(Node **a, int n)
 	for (i = 0; i < nfiles; i++) {
 		if (files[i].fname && strcmp(x->sval, files[i].fname) == 0) {
 			if (ferror(files[i].fp))
-				WARNING( "i/o error occurred on %s", files[i].fname );
+				FATAL( "i/o error occurred on %s", files[i].fname );
 			if (files[i].mode == '|' || files[i].mode == LE)
 				stat = pclose(files[i].fp);
 			else
 				stat = fclose(files[i].fp);
 			if (stat == EOF)
-				WARNING( "i/o error occurred closing %s", files[i].fname );
+				FATAL( "i/o error occurred closing %s", files[i].fname );
 			if (i > 2)	/* don't do /dev/std... */
 				xfree(files[i].fname);
 			files[i].fname = NULL;	/* watch out for ref thru this */
@@ -1806,13 +1804,13 @@ void closeall(void)
 	for (i = 0; i < FOPEN_MAX; i++) {
 		if (files[i].fp) {
 			if (ferror(files[i].fp))
-				WARNING( "i/o error occurred on %s", files[i].fname );
+				FATAL( "i/o error occurred on %s", files[i].fname );
 			if (files[i].mode == '|' || files[i].mode == LE)
 				stat = pclose(files[i].fp);
 			else
 				stat = fclose(files[i].fp);
 			if (stat == EOF)
-				WARNING( "i/o error occurred while closing %s", files[i].fname );
+				FATAL( "i/o error occurred while closing %s", files[i].fname );
 		}
 	}
 }
@@ -1994,6 +1992,13 @@ void backsub(char **pb_ptr, const char **sptr_ptr)	/* handle \\& variations */
 {						/* sptr[0] == '\\' */
 	char *pb = *pb_ptr;
 	const char *sptr = *sptr_ptr;
+	static bool first = true;
+	static bool do_posix = false;
+
+	if (first) {
+		first = false;
+		do_posix = (getenv("POSIXLY_CORRECT") != NULL);
+	}
 
 	if (sptr[1] == '\\') {
 		if (sptr[2] == '\\' && sptr[3] == '&') { /* \\\& -> \& */
@@ -2003,6 +2008,9 @@ void backsub(char **pb_ptr, const char **sptr_ptr)	/* handle \\& variations */
 		} else if (sptr[2] == '&') {	/* \\& -> \ + matched */
 			*pb++ = '\\';
 			sptr += 2;
+		} else if (do_posix) {		/* \\x -> \x */
+			sptr++;
+			*pb++ = *sptr++;
 		} else {			/* \\x -> \\x */
 			*pb++ = *sptr++;
 			*pb++ = *sptr++;
