@@ -25,6 +25,46 @@ THIS SOFTWARE.
 This file lists all bug fixes, changes, etc., made since the AWK book
 was sent to the printers in August, 1987.
 
+May 5, 2020:
+	Fix checks for compilers that can handle noreturn. Thanks to
+	GitHub user enh-google for pointing it out. Closes Issue #79.
+
+April 16, 2020:
+	Handle old compilers that don't support C11 (for noreturn).
+	Thanks to Arnold Robbins.
+
+April 5, 2020:
+	Use <stdnoreturn.h> and noreturn instead of GCC attributes.
+	Thanks to GitHub user awkfan77. Closes PR #77.
+
+February 28, 2020:
+	More cleanups from Christos Zoulas: notably backslash continuation
+	inside strings removes the newline and a fix for RS = "^a".
+	Fix for address sanitizer-found problem. Thanks to GitHub user
+	enh-google.
+
+February 19, 2020:
+	More small cleanups from Christos Zoulas.
+
+February 18, 2020:
+	Additional cleanups from Christos Zoulas. It's no longer necessary
+	to use the -y flag to bison.
+
+February 6, 2020:
+	Additional small cleanups from Christos Zoulas. awk is now
+	a little more robust about reporting I/O errors upon exit.
+
+January 31, 2020:
+	Merge PR #70, which avoids use of variable length arrays. Thanks
+	to GitHub user michaelforney.  Fix issue #60 ({0} in interval
+	expressions doesn't work).  Also get all tests working again.
+	Thanks to Arnold Robbins.
+
+January 24, 2020:
+	A number of small cleanups from Christos Zoulas.  Add the close
+	on exec flag to files/pipes opened for redirection; courtesy of
+	Arnold Robbins.
+
 January 19, 2020:
 	If POSIXLY_CORRECT is set in the environment, then sub and gsub
 	use POSIX rules for multiple backslashes.  This fixes Issue #66,
@@ -72,13 +112,13 @@ October 25, 2019:
 
 October 24, 2019:
 	Import second round of code cleanups from NetBSD. Much thanks
-	to Christos Zoulas (Github user zoulasc). Merges PR 53.
+	to Christos Zoulas (GitHub user zoulasc). Merges PR 53.
 	Add an optimization for string concatenation, also from
 	Christos.
 
 October 17, 2019:
 	Import code cleanups from NetBSD. Much thanks to Christos
-	Zoulas (Github user zoulasc). Merges PR 51.
+	Zoulas (GitHub user zoulasc). Merges PR 51.
 
 October 6, 2019:
 	Import code from NetBSD awk that implements RS as a regular
@@ -86,7 +126,7 @@ October 6, 2019:
 
 September 10, 2019:
 	Fixes for various array / memory overruns found via gcc's
-	-fsanitize=unknown. Thanks to Alexander Richardson (Github
+	-fsanitize=unknown. Thanks to Alexander Richardson (GitHub
 	user arichardson). Merges PRs 47 and 48.
 
 July 28, 2019:

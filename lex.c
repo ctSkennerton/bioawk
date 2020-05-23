@@ -30,7 +30,7 @@ THIS SOFTWARE.
 #include "ytab.h"
 
 extern YYSTYPE	yylval;
-extern int	infunc;
+extern bool	infunc;
 
 int	lineno	= 1;
 int	bracecnt = 0;
@@ -43,7 +43,7 @@ typedef struct Keyword {
 	int	type;
 } Keyword;
 
-Keyword keywords[] ={	/* keep sorted: binary searched */
+const Keyword keywords[] = {	/* keep sorted: binary searched */
 	{ "BEGIN",	XBEGIN,		XBEGIN },
 	{ "END",	XEND,		XEND },
 	{ "NF",		VARNF,		VARNF },
@@ -108,14 +108,14 @@ Keyword keywords[] ={	/* keep sorted: binary searched */
 
 #define	RET(x)	{ if(dbg)printf("lex %s\n", tokname(x)); return(x); }
 
-int peek(void)
+static int peek(void)
 {
 	int c = input();
 	unput(c);
 	return c;
 }
 
-int gettok(char **pbuf, int *psz)	/* get next input token */
+static int gettok(char **pbuf, int *psz)	/* get next input token */
 {
 	int c, retc;
 	char *buf = *pbuf;
@@ -227,6 +227,11 @@ int yylex(void)
 			while ((c = input()) != '\n' && c != 0)
 				;
 			unput(c);
+			/*
+			 * Next line is a hack, itcompensates for
+			 * unput's treatment of \n.
+			 */
+			lineno++;
 			break;
 		case ';':
 			RET(';');
@@ -400,6 +405,7 @@ int string(void)
 		case '\\':
 			c = input();
 			switch (c) {
+			case '\n': break;
 			case '"': *bp++ = '"'; break;
 			case 'n': *bp++ = '\n'; break;
 			case 't': *bp++ = '\t'; break;
@@ -457,7 +463,7 @@ int string(void)
 }
 
 
-int binsearch(char *w, Keyword *kp, int n)
+static int binsearch(char *w, const Keyword *kp, int n)
 {
 	int cond, low, mid, high;
 
@@ -477,7 +483,7 @@ int binsearch(char *w, Keyword *kp, int n)
 
 int word(char *w)
 {
-	Keyword *kp;
+	const Keyword *kp;
 	int c, n;
 
 	n = binsearch(w, keywords, sizeof(keywords)/sizeof(keywords[0]));
@@ -589,6 +595,8 @@ int input(void)	/* get next lexical input character */
 
 void unput(int c)	/* put lexical character back on input */
 {
+	if (c == '\n')  
+		lineno--;
 	if (yysptr >= yysbuf + sizeof(yysbuf))
 		FATAL("pushed back too much: %.20s...", yysbuf);
 	*yysptr++ = c;

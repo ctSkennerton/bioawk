@@ -186,6 +186,14 @@ BEGIN {	RS = ""
 }' >foo1
 $awk 'END {print NR}' foo1 | grep 4 >/dev/null || echo 'BAD: T.misc abcdef fails'
 
+# Test for RS regex being reapplied
+echo aaa1a2a | $awk 1 RS='^a' >foo1
+cat << \EOF > foo2
+
+aa1a2a
+
+EOF
+diff foo1 foo2 || echo 'BAD: T.misc ^regex reapplied fails'
 
 # The following should not produce a warning about changing a constant
 # nor about a curdled tempcell list
@@ -382,7 +390,7 @@ $awk 'BEGIN \
 		print "hello, world"
 	}
 }}}' >foo1 2>foo2
-grep 'source line 5' foo2 >/dev/null 2>&1 || echo 'BAD: T.misc continuation line number'
+grep 'source line 4' foo2 >/dev/null 2>&1 || echo 'BAD: T.misc continuation line number'
 
 
 echo 111 222 333 >foo

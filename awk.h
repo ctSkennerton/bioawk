@@ -26,6 +26,11 @@ THIS SOFTWARE.
 #include <stdint.h>
 #include <stdbool.h>
 #include "addon.h"
+#if __STDC_VERSION__ <= 199901L
+#define noreturn
+#else
+#include <stdnoreturn.h>
+#endif
 
 typedef double	Awkfloat;
 
@@ -61,6 +66,7 @@ extern bool	safe;		/* false => unsafe, true => safe */
 #define	RECSIZE	(8 * 1024)	/* sets limit on records, fields, etc., etc. */
 extern int	recsize;	/* size of current record, orig RECSIZE */
 
+extern char	EMPTY[];	/* this avoid -Wwritable-strings issues */
 extern char	**FS;
 extern char	**RS;
 extern char	**ORS;
@@ -79,8 +85,6 @@ extern int	lineno;		/* line number in awk program */
 extern int	errorflag;	/* 1 if error has occurred */
 extern bool	donefld;	/* true if record broken into fields */
 extern bool	donerec;	/* true if record is valid (no fld has changed */
-extern char	inputFS[];	/* FS at time of input, for field splitting */
-
 extern int	dbg;
 
 extern const char *patbeg;	/* beginning of pattern matched */

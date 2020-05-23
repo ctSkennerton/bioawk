@@ -30,7 +30,11 @@ man1dir := $(mandir)/man1
 GIT_VERSION := "$(shell git describe --abbrev=4 --dirty --always --tags)"
 
 #CFLAGS = -O2 -DBIO_VERSION=\"$(GIT_VERSION)\"
-CFLAGS = -g -DBIO_VERSION=\"$(GIT_VERSION)\"
+CFLAGS = -O2 -g -DBIO_VERSION=\"$(GIT_VERSION)\"
+#CFLAGS = -fsanitize=address -O1 -g -fno-omit-frame-pointer -fno-optimize-sibling-calls
+#CFLAGS = -g
+#CFLAGS =
+#CFLAGS = -O2
 
 # compiler options
 #CC = gcc -Wall -g -Wwrite-strings
@@ -41,7 +45,7 @@ CC = $(HOSTCC)  # change this is cross-compiling.
 
 # yacc options.  pick one; this varies a lot by system.
 #YFLAGS = -d -S
-YACC = bison -d -y
+YACC = bison -d
 #YACC = yacc -d
 #		-S uses sprintf in yacc parser instead of sprint
 
@@ -64,15 +68,15 @@ bioawk:	ytab.o $(OFILES)
 
 $(OFILES):	awk.h ytab.h proto.h
 
-#Clear dependency for parallel build: (make -j)
-#YACC generated y.tab.c and y.tab.h at the same time
-#this needs to be a static pattern rules otherwise multiple target
-#are mapped onto multiple executions of yacc, which overwrite
-#each others outputs.
-y%.c y%.h:	awk.h proto.h awkgram.y
+# Clear dependency for parallel build: (make -j)
+# Depending if we used yacc or bison we can be generating different names
+# ({awkgram,y}.tab.{c,h}) so try to move both. We could be using -p to
+# specify the output prefix, but older yacc's don't support it.
+ytab.c ytab.h:	awk.h proto.h awkgram.y
 	$(YACC) $(YFLAGS) awkgram.y
-	mv y.$*.c y$*.c
-	mv y.$*.h y$*.h
+	-@for i in c h; do for j in awkgram y; do \
+	     if [ -f "$$j.tab.$$i" ]; then mv $$j.tab.$$i ytab.$$i; fi; \
+	  done; done
 
 ytab.h:	ytab.c
 

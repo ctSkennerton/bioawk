@@ -46,7 +46,7 @@ extern	void	freetr(Node *);
 extern	int	hexstr(const uschar **);
 extern	int	quoted(const uschar **);
 extern	char	*cclenter(const char *);
-extern	void	overflo(const char *) __attribute__((__noreturn__));
+extern	noreturn void	overflo(const char *);
 extern	void	cfoll(fa *, Node *);
 extern	int	first(Node *);
 extern	void	follow(Node *);
@@ -111,6 +111,7 @@ extern	double	getfval(Cell *);
 extern	char	*getsval(Cell *);
 extern	char	*getpssval(Cell *);     /* for print */
 extern	char	*tostring(const char *);
+extern	char	*tostringN(const char *, size_t);
 extern	char	*qstring(const char *, int);
 extern	Cell	*catstr(Cell *, Cell *);
 
@@ -121,7 +122,7 @@ extern	void	growfldtab(int n);
 extern	void	savefs(void);
 extern	int	getrec(char **, int *, bool);
 extern	void	nextfile(void);
-extern	int	readrec(char **buf, int *bufsize, FILE *inf);
+extern	int	readrec(char **buf, int *bufsize, FILE *inf, bool isnew);
 extern	char	*getargv(int);
 extern	void	setclvar(char *);
 extern	void	fldbld(void);
@@ -132,12 +133,14 @@ extern	int	refldbld(const char *, const char *);
 extern	void	recbld(void);
 extern	Cell	*fieldadr(int);
 extern	void	yyerror(const char *);
-extern	void	fpecatch(int);
 extern	void	bracecheck(void);
 extern	void	bcheck2(int, int, int);
-extern	void	SYNTAX(const char *, ...);
-extern	void	FATAL(const char *, ...) __attribute__((__noreturn__));
-extern	void	WARNING(const char *, ...);
+extern	void	SYNTAX(const char *, ...)
+    __attribute__((__format__(__printf__, 1, 2)));
+extern	noreturn void	FATAL(const char *, ...)
+    __attribute__((__format__(__printf__, 1, 2)));
+extern	void	WARNING(const char *, ...)
+    __attribute__((__format__(__printf__, 1, 2)));
 extern	void	error(void);
 extern	void	eprint(void);
 extern	void	bclass(int);
@@ -188,7 +191,7 @@ extern	Cell	*bltin(Node **, int);
 extern	Cell	*printstat(Node **, int);
 extern	Cell	*nullproc(Node **, int);
 extern	FILE	*redirect(int, Node *);
-extern	FILE	*openfile(int, const char *);
+extern	FILE	*openfile(int, const char *, bool *);
 extern	const char	*filename(FILE *);
 extern	Cell	*closefile(Node **, int);
 extern	void	closeall(void);
