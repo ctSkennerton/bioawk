@@ -25,6 +25,28 @@ THIS SOFTWARE.
 This file lists all bug fixes, changes, etc., made since the AWK book
 was sent to the printers in August, 1987.
 
+July 2, 2020:
+	Merge PRs 85 and 86 which fix regressions. Thanks to
+	Tim van der Molen for the fixes.
+
+June 25, 2020:
+	Merge PRs 82 and 84. The latter fixes issue #83. Thanks to
+	Todd Miller and awkfan77.
+
+June 12, 2020:
+	Clear errno before calling errcheck to avoid any spurious errors
+	left over from previous calls that may have set it. Thanks to
+	Todd Miller for the fix, from PR #80.
+
+	Fix Issue #78 by allowing \r to follow floating point numbers in
+	lib.c:is_number. Thanks to GitHub user ajcarr for the report
+	and to Arnold Robbins for the fix.
+
+June 5, 2020:
+	In fldbld(), make sure that inputFS is set before trying to
+	use it. Thanks to  Steffen Nurpmeso <steffen@sdaoden.eu>
+	for the report.
+
 May 5, 2020:
 	Fix checks for compilers that can handle noreturn. Thanks to
 	GitHub user enh-google for pointing it out. Closes Issue #79.
