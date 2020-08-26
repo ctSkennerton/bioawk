@@ -38,7 +38,7 @@ THIS SOFTWARE.
 #include <sys/types.h>
 #include <sys/wait.h>
 #include "awk.h"
-#include "ytab.h"
+#include "awkgram.tab.h"
 
 static void stdinit(void);
 static void flush_all(void);
@@ -119,7 +119,7 @@ int adjbuf(char **pbuf, int *psiz, int minlen, int quantum, char **pbptr,
 		if (rminlen)
 			minlen += quantum - rminlen;
 		tbuf = realloc(*pbuf, minlen);
-		DPRINTF("adjbuf %s: %d %d (pbuf=%p, tbuf=%p)\n", whatrtn, *psiz, minlen, *pbuf, tbuf);
+		DPRINTF("adjbuf %s: %d %d (pbuf=%p, tbuf=%p)\n", whatrtn, *psiz, minlen, (void*)*pbuf, (void*)tbuf);
 		if (tbuf == NULL) {
 			if (whatrtn)
 				FATAL("out of memory in %s", whatrtn);
@@ -1526,7 +1526,6 @@ static char *nawk_convert(const char *s, int (*fun_c)(int),
 	char *pbuf     = NULL;
 	const char *ps = NULL;
 	size_t n       = 0;
-	mbstate_t mbs, mbs2;
 	wchar_t wc;
 	size_t sz = MB_CUR_MAX;
 
@@ -1541,17 +1540,24 @@ static char *nawk_convert(const char *s, int (*fun_c)(int),
 		/* upper/lower character may be shorter/longer */
 		buf = tostringN(s, strlen(s) * sz + 1);
 
-		memset(&mbs,  0, sizeof(mbs));
-		memset(&mbs2, 0, sizeof(mbs2));
+		(void) mbtowc(NULL, NULL, 0);	/* reset internal state */
+		/*
+		 * Reset internal state here too.
+		 * Assign result to avoid a compiler warning. (Casting to void
+		 * doesn't work.)
+		 * Increment said variable to avoid a different warning.
+		 */
+		int unused = wctomb(NULL, L'\0');
+		unused++;
 
 		ps   = s;
 		pbuf = buf;
-		while (n = mbrtowc(&wc, ps, sz, &mbs),
+		while (n = mbtowc(&wc, ps, sz),
 		       n > 0 && n != (size_t)-1 && n != (size_t)-2)
 		{
 			ps += n;
 
-			n = wcrtomb(pbuf, fun_wc(wc), &mbs2);
+			n = wctomb(pbuf, fun_wc(wc));
 			if (n == (size_t)-1)
 				FATAL("illegal wide character %s", s);
 
@@ -1566,6 +1572,24 @@ static char *nawk_convert(const char *s, int (*fun_c)(int),
 		return buf;
 	}
 }
+
+#ifdef __DJGPP__
+static wint_t towupper(wint_t wc)
+{
+	if (wc >= 0 && wc < 256)
+		return toupper(wc & 0xFF);
+
+	return wc;
+}
+
+static wint_t towlower(wint_t wc)
+{
+	if (wc >= 0 && wc < 256)
+		return tolower(wc & 0xFF);
+
+	return wc;
+}
+#endif
 
 static char *nawk_toupper(const char *s)
 {
@@ -1846,7 +1870,7 @@ const char *filename(FILE *fp)
  	Cell *x;
 	size_t i;
 	bool stat;
- 
+
  	x = execute(a[0]);
  	getsval(x);
 	stat = true;
@@ -1855,7 +1879,10 @@ const char *filename(FILE *fp)
 			continue;
 		if (ferror(files[i].fp))
 			FATAL("i/o error occurred on %s", files[i].fname);
-		if (files[i].mode == '|' || files[i].mode == LE)
+		if (files[i].fp == stdin || files[i].fp == stdout ||
+		    files[i].fp == stderr)
+			stat = freopen("/dev/null", "r+", files[i].fp) == NULL;
+		else if (files[i].mode == '|' || files[i].mode == LE)
 			stat = pclose(files[i].fp) == -1;
 		else
 			stat = fclose(files[i].fp) == EOF;
@@ -1865,6 +1892,7 @@ const char *filename(FILE *fp)
 			xfree(files[i].fname);
 		files[i].fname = NULL;	/* watch out for ref thru this */
 		files[i].fp = NULL;
+		break;
  	}
  	tempfree(x);
  	x = gettemp();
@@ -1882,8 +1910,12 @@ void closeall(void)
 			continue;
 		if (ferror(files[i].fp))
 			FATAL( "i/o error occurred on %s", files[i].fname );
+		if (files[i].fp == stdin)
+			continue;
 		if (files[i].mode == '|' || files[i].mode == LE)
 			stat = pclose(files[i].fp) == -1;
+		else if (files[i].fp == stdout || files[i].fp == stderr)
+			stat = fflush(files[i].fp) == EOF;
 		else
 			stat = fclose(files[i].fp) == EOF;
 		if (stat)
