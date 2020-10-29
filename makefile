@@ -63,7 +63,7 @@ a.out: bioawk
 	ln -s bioawk a.out
 	
 bioawk:	awkgram.tab.o $(OFILES)
-	$(CC) $(CFLAGS) -o $@ ytab.o $(OFILES) $(ALLOC)  -lm -lz
+	$(CC) $(CFLAGS) -o $@ awkgram.tab.o $(OFILES) $(ALLOC)  -lm -lz
 
 $(OFILES):	awk.h awkgram.tab.h proto.h
 
