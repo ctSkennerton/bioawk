@@ -59,7 +59,6 @@ SHIP = README LICENSE FIXES $(SOURCE) awkgram.tab.[ch].bak makefile  \
 	 awk.1
 
 a.out: bioawk
-	-rm a.out
 	ln -s bioawk a.out
 	
 bioawk:	awkgram.tab.o $(OFILES)
