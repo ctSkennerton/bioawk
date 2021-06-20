@@ -289,9 +289,10 @@ void bio_attribute(Cell * x, Cell * ap, Cell * y) {
 		*s = '\0';
 		
 		char *key, *value, *temp2;
+		double result;
 		bio_attribute_inner(t, &key, &value, &temp2);
-		if (is_number(value))
-			setsymtab(key, value, atof(value), STR|NUM, (Array *) ap->sval);
+		if (is_number(value, & result))
+			setsymtab(key, value, result, STR|NUM, (Array *) ap->sval);
 		else
 			setsymtab(key, value, 0.0, STR, (Array *) ap->sval);
 		*s = temp;
@@ -628,12 +629,14 @@ getrec_start:
 		memcpy(buf, g_str.s, g_str.l + 1);
 		if (c >= 0) {	/* normal record */
 			if (isrecord) {
+				double result;
+
 				if (freeable(fldtab[0]))
 					xfree(fldtab[0]->sval);
 				fldtab[0]->sval = buf;	/* buf == record */
 				fldtab[0]->tval = REC | STR | DONTFREE;
-				if (is_number(fldtab[0]->sval)) {
-					fldtab[0]->fval = atof(fldtab[0]->sval);
+				if (is_number(fldtab[0]->sval, & result)) {
+					fldtab[0]->fval = result;
 					fldtab[0]->tval |= NUM;
 				}
 			}
